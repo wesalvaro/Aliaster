@@ -4,7 +4,7 @@
 
 You and I both type way too much on the console. This helps us quit.
     
-When you use an alias, you get points equal to the number of keystrokes you saved in the process. Each command you type is stuck in a CSV file along with how many times you used the command. Commands are split so that partial commands are counted, as well.
+When you use an alias, you get points equal to the number of keystrokes you saved in the process. Each command you type is put in a file along with how many times you used the command. Commands are split so that partial commands are counted, as well.
 
 For example:
 

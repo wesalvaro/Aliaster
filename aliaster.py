@@ -6,7 +6,7 @@
 
 You and I both type way too much on the console. This helps us quit.
     
-When you use an alias, you get points equal to the number of keystrokes you saved in the process. Each command you type is stuck in a CSV file along with how many times you used the command. Commands are split so that partial commands are counted, as well.
+When you use an alias, you get points equal to the number of keystrokes you saved in the process. Each command you type is put in a file along with how many times you used the command. Commands are split so that partial commands are counted, as well.
 
 For example:
 
@@ -46,7 +46,6 @@ There are a few settings you may wish to change:
 GPLv3
 
 """
-import csv
 import os
 import shlex
 import subprocess
@@ -59,16 +58,15 @@ SUGG_LENGTH_THRESHOLD = 4
 
 class Aliaster(object):
 
-  def __init__(self):
-    self._Load()
-
   def _Load(self):
+    with open(FREQ_FILE, 'r') as fd:
+      cmds = fd.readlines()
     self.aliaster = {}
-    with open(FREQ_FILE, 'r+') as fd:
-      csv_file = csv.reader(fd)
-      for record in csv_file:
-        cmd, cnt = record
-        self.aliaster[cmd] = int(cnt)
+    for cmd in cmds:
+      for cnt, alias in self._Count(cmd):
+        if len(alias) < SUGG_LENGTH_THRESHOLD:
+          continue
+        self.aliaster[alias] = cnt + 1
 
   def _Count(self, cmd):
     cmd_list = shlex.split(cmd)
@@ -81,6 +79,7 @@ class Aliaster(object):
     return '\033[92m%d\033[0m: %s' % (cnt, cmd)
 
   def __str__(self, cmd=None, threshold=FREQ_THRESHOLD):
+    self._Load()
     strings = []
     if cmd:
       for cnt, cmd in self._Count(cmd):
@@ -95,16 +94,8 @@ class Aliaster(object):
     return '\n'.join(strings)
 
   def Store(self, cmd):
-    for cnt, alias in self._Count(cmd):
-      if len(alias) < SUGG_LENGTH_THRESHOLD:
-        continue
-      self.aliaster[alias] = cnt + 1
-
-  def Save(self):
-    with open(FREQ_FILE, 'w') as fd:
-      csv_file = csv.writer(fd)
-      for alias in self.aliaster.iteritems():
-        csv_file.writerow(list(alias))
+    with open(FREQ_FILE, 'a') as fd:
+      fd.write('%s\n' % cmd)
 
 
 class Gamificalias(object):
@@ -133,8 +124,6 @@ if __name__ == '__main__':
     game.Winning(cmd, alias)
     print game
   else:
-    aliaster = Aliaster()
-    aliaster.Store(cmd)
-    aliaster.Save()
+    Aliaster().Store(cmd)
   sys.exit(game.score)
 
