@@ -12,7 +12,7 @@ autoload -Uz add-zsh-hook
 
 # Sets the tab and window titles before command execution.
 function tally-aliaster {
-  python /usr/local/google/home/wesalvaro/third_party/Aliaster/aliaster.py \
+  python /path/to/aliaster.py \
     $1 "`alias $1`" "`type $1 | grep function > /dev/null && which $1 | wc -c`"
   export ALIASTER=$?
 }
