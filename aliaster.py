@@ -58,21 +58,31 @@ SUGG_LENGTH_THRESHOLD = 4
 class Aliaster(object):
 
   def _Load(self):
-    with open(FREQ_FILE, 'r') as fd:
-      cmds = fd.readlines()
     self.aliaster = {}
-    for cmd in cmds:
-      for cnt, alias in self._Count(cmd):
-        if len(alias) < SUGG_LENGTH_THRESHOLD:
-          continue
-        self.aliaster[alias] = cnt + 1
+    for cmd in self._LoadCmds():
+      self._LoadCounts(cmd)
 
-  def _Count(self, cmd):
-    cmd_list = shlex.split(cmd)
-    while cmd_list:
-      alias = ' '.join(cmd_list)
-      yield self.aliaster.setdefault(alias, 0), alias
-      cmd_list.pop()
+  def _LoadCmds(self):
+    with open(FREQ_FILE, 'r') as fd:
+      lines = fd.readlines()
+    cmd = ''
+    while lines:
+      cmd += lines.pop()
+      try:
+        cmd_list = shlex.split(cmd.strip())
+      except ValueError:
+        continue  # We probably just need another line.
+      else:
+        yield cmd_list
+        cmd = ''
+
+  def _LoadCounts(self, cmd):
+    while cmd:
+      alias = ' '.join(cmd).strip()
+      if len(alias) < SUGG_LENGTH_THRESHOLD:
+        break
+      self.aliaster[alias] = self.aliaster.get(alias, 0) + 1
+      cmd.pop()
 
   def _Print(self, cmd, cnt):
     return '\033[92m%d\033[0m: %s' % (cnt, cmd)
