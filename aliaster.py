@@ -21,7 +21,7 @@ ZSH or you to figure out your shell's preexec analog.
 ### Installation:
     touch $HOME/.aliaster
     function preexec {
-      python /path/to/aliaster.py $1 "`alias $1`" "`type $1 | grep function > /dev/null && which $1 | wc -c`"
+      python /path/to/aliaster.py $1 "`whence -w $1 | egrep -q \"function|alias\" && whence -f $1 | wc -c`"
       export ALIASTER=$?
     }
 
@@ -104,12 +104,8 @@ class Gamificalias(object):
     self.points = 0
     self.score = int(os.getenv(self.VAR, 0))
 
-  def Alias(self, alias):
-    alias = alias.partition('=')
-    pts = len(alias[2].strip("'")) - len(alias[0])
-    self.Winning(pts)
-
-  def Winning(self, points):
+  def Winning(self, cmd, expanded_cnt):
+    points = expanded_cnt - len(cmd) - 1
     self.points += points
     self.score += self.points
 
@@ -118,20 +114,19 @@ class Gamificalias(object):
         self.points, self.score)
 
 
-if __name__ == '__main__':
-  cmd = sys.argv[1]
-  alias = sys.argv[2]
-  func = sys.argv[3]
+def main(_, cmd, expanded_cnt):
+  expanded_cnt = int(expanded_cnt or 0)
   game = Gamificalias()
   if cmd == 'aliaster':
     print Aliaster()
-  elif alias:
-    game.Alias(alias)
-    print game
-  elif func:
-    game.Winning(int(func))
+  elif expanded_cnt:
+    game.Winning(cmd, expanded_cnt)
     print game
   else:
     Aliaster().Store(cmd)
   sys.exit(game.score)
+
+
+if __name__ == '__main__':
+  main(*sys.argv)
 
