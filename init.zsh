@@ -10,7 +10,7 @@
 # Don't override precmd/preexec; append to hook array.
 autoload -Uz add-zsh-hook
 
-# Sets the tab and window titles before command execution.
+# Tallies your usage of aliases and functions.
 function tally-aliaster {
   python /path/to/aliaster.py \
     $1 "`whence -w $1 | egrep -q \"function|alias\" && whence -f $1 | wc -c`"
