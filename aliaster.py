@@ -5,7 +5,7 @@
 ### What is this?
 
 You and I both type way too much on the console. This helps us quit.
-    
+
 When you use an alias, you get points equal to the number of keystrokes you saved in the process. Each command you type is put in a file along with how many times you used the command. Commands are split so that partial commands are counted, as well.
 
 For example:
@@ -21,8 +21,8 @@ ZSH or you to figure out your shell's preexec analog.
 ### Installation:
     touch $HOME/.aliaster
     function preexec {
-      python /path/to/aliaster.py $1 "`alias $1`"
-      ALIASTER=$?
+      python /path/to/aliaster.py $1 "`alias $1`" "`type $1 | grep function > /dev/null && which $1 | wc -c`"
+      export ALIASTER=$?
     }
 
 ### Usage:
@@ -48,13 +48,12 @@ GPLv3
 """
 import os
 import shlex
-import subprocess
 import sys
-from os import path
 
-FREQ_FILE = path.join(os.getenv('HOME'), '.aliaster')
+FREQ_FILE = os.path.join(os.getenv('HOME'), '.aliaster')
 FREQ_THRESHOLD = 10
 SUGG_LENGTH_THRESHOLD = 4
+
 
 class Aliaster(object):
 
@@ -70,7 +69,7 @@ class Aliaster(object):
 
   def _Count(self, cmd):
     cmd_list = shlex.split(cmd)
-    while len(cmd_list):
+    while cmd_list:
       alias = ' '.join(cmd_list)
       yield self.aliaster.setdefault(alias, 0), alias
       cmd_list.pop()
@@ -102,26 +101,35 @@ class Gamificalias(object):
   VAR = 'ALIASTER'
 
   def __init__(self):
+    self.points = 0
     self.score = int(os.getenv(self.VAR, 0))
 
-  def Winning(self, cmd, alias):
+  def Alias(self, alias):
     alias = alias.partition('=')
-    self.pts = len(alias[2].strip("'")) - len(alias[0])
-    self.score += self.pts
+    pts = len(alias[2].strip("'")) - len(alias[0])
+    self.Winning(pts)
+
+  def Winning(self, points):
+    self.points += points
+    self.score += self.points
 
   def __str__(self):
     return '\033[95mBAM! \033[92m+%d \033[93m= \033[94m%d\033[0m' % (
-        self.pts, self.score)
+        self.points, self.score)
 
 
 if __name__ == '__main__':
   cmd = sys.argv[1]
   alias = sys.argv[2]
+  func = sys.argv[3]
   game = Gamificalias()
   if cmd == 'aliaster':
     print Aliaster()
-  elif len(alias):
-    game.Winning(cmd, alias)
+  elif alias:
+    game.Alias(alias)
+    print game
+  elif func:
+    game.Winning(int(func))
     print game
   else:
     Aliaster().Store(cmd)

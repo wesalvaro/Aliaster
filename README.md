@@ -19,8 +19,8 @@ ZSH or you to figure out your shell's preexec analog.
 ### Installation:
     touch $HOME/.aliaster
     function preexec {
-      python /path/to/aliaster.py $1 "`alias $1`"
-      ALIASTER=$?
+      python /path/to/aliaster.py $1 "`alias $1`" "`type $1 | grep function > /dev/null && which $1 | wc -c`"
+      export ALIASTER=$?
     }
 
 ### Usage:
